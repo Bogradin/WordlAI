@@ -9,6 +9,7 @@ X = "X"
 O = "O"
 EMPTY = None
 
+
 def initial_state():
     """
     Returns starting state of the board.
@@ -22,128 +23,137 @@ def player(board):
     """
     Returns player who has the next turn on a board.
     """
-    x_count = 0
-    o_count = 0
+    i = sum(x is not None for x in board[0]) + sum(x is not None for x in board[1]) + sum(x is not None for x in board[2])
 
-    for i in range (2):
-        for j in range (2):
-            if board[i][j] == X:
-                x_count = x_count + 1
-            if board[i][j] == O:
-                o_count = o_count + 1
-    
-    if x_count > o_count:
-        return O
-    else: 
+    if (i % 2 == 0):
         return X
+    return O
 
 
 def actions(board):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
-    actions = set()
+    setMoves = set()
 
-    for i in range (2):
-        for j in range (2):
-            if (board[i][j] == EMPTY):
-                actions.add((i,j))
-    return actions
+    for i in range(3):
+        for j in range(3):
+            if(board[i][j] is None):
+                setMoves.add((i, j))
+    if len(setMoves) == 0:
+        return None
+    return setMoves
 
 
 def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
     """
-    board_copy = copy.deepcopy(board)
-    row, col = action
-    board_copy[row][col] = player(board)
-    return board_copy
+    copiedBoard = copy.deepcopy(board)
+    playerTurn = player(board)
+    
+    i = action[0]
+    j = action[1]
+
+    copiedBoard[i][j] = playerTurn
+
+    return copiedBoard
+
 
 def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
-    playerx = X
-    playero = O
+    players = {X, O}
 
-    if (rowChecker(board, playerx) == True):
-        return X
-    if (rowChecker(board, playero) == True):
-        return O
-    if (colChecker(board, playerx) == True):
-        return X
-    if (colChecker(board, playero) == True):
-        return O
-    if (diagChecker(board, playerx) == True):
-        return X
-    if (diagChecker(board, playero) == True):
-        return O
+    for player in players:
+        for row in range(3):
+            if board[row][0] == player and board[row][1] == player and board[row][2] == player:
+                return player
+    
+        for col in range(3):
+            if board[0][col] == player and board[1][col] == player and board[2][col] == player:
+                return player
+        
+        if board[0][0] == player and board[1][1] == player and board[2][2] == player:
+            return player
+            
+        if board[2][0] == player and board[1][1] == player and board[0][2] == player:
+            return player
 
 
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-
-    count = 0
-
-    if (winner(board) == X or winner(board) == O):
+    if (winner(board) == O) or (winner(board) == X):
         return True
+    for row in range(3):
+        for col in range(3):
+            if(board[row][col] is None):
+                return False
+    return True
 
-    for i in range (2):
-        for j in range (2):
-            if board[i][j] == EMPTY:
-                count = count + 1
-    
-    if (count > 0):
-        return False
-    else:
-        return True
 
 def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    if (winner(board) == X):
+    winnerGame = winner(board)
+    if (winnerGame is X):
         return 1
-    elif (winner(board) == O):
+    elif (winnerGame is O):
         return -1
     else:
         return 0
+
 
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-
-def colChecker(board, player):
-    """
-    Checks if player won in any col.
-    """
-    for i in range (2):
-        if (board[i][0] and board[i][1] and board[i][2] == player):
-            return True
+    if terminal(board):
+        return None
     else:
-        return False
+        if player(board) == X:
+            value, move = max_value(board)
+            return move
+        else:
+            value, move = min_value(board)
+            return move
 
-def rowChecker(board, player):
-    """
-    Checks if player won in any row.
-    """
-    for i in range (2):
-        if (board[0][i] and board[1][i] and board[2][i] == player):
-            return True
-    else:
-        return False
 
-def diagChecker(board, player):
-    """
-    Checks if player won in any diag.
-    """
-    if (board[0][0] and board[1][1] and board[2][2] == player):
-        return True
-    elif (board[2][0] and board[1][1] and board[0][2] == player):
-        return True
-    else:
-        return False
+def max_value(board):
+    if terminal(board):
+        return utility(board), None
+
+    v = float('-inf')
+    move = None
+    for action in actions(board):
+        # v = max(v, min_value(result(board, action)))
+        aux, act = min_value(result(board, action))
+        if aux > v:
+            v = aux
+            move = action
+            if v == 1:
+                return v, move
+
+    return v, move
+
+
+def min_value(board):
+    if terminal(board):
+        return utility(board), None
+
+    v = float('inf')
+    move = None
+    for action in actions(board):
+        # v = max(v, min_value(result(board, action)))
+        aux, act = max_value(result(board, action))
+        if aux < v:
+            v = aux
+            move = action
+            if v == -1:
+                return v, move
+
+    return v, move
