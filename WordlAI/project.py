@@ -91,7 +91,7 @@ class Wordle():
         
 def main():
 
-    with open("wordlAI_data", "w", newline='') as file:
+    with open("wordlAI_data.csv", "w", newline='') as file:
         writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess1", "guess2", "guess3", "guess4", "guess5", "guess6"])
         writer.writerow({"won/lose": 'won_lose', "secret_word": 'secret_word', "guess1": 'guess1', "guess2": 'guess2', "guess3": 'guess3', "guess4": 'guess4', "guess5": 'guess5', "guess6": 'guess6'})
     sample = int(input("sample: "))
@@ -114,9 +114,16 @@ def main():
                 wordle.ai()
         print(wordle)
 
-        with open("wordlAI_data", "a", newline='') as file:
+        with open("wordlAI_data.csv", "a", newline='') as file:
             writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess0", "guess1", "guess2", "guess3", "guess4", "guess5"])
             writer.writerow({"won/lose": wordle.case, "secret_word": wordle.secret_word, "guess0": guess[0], "guess1": guess[1], "guess2": guess[2], "guess3": guess[3], "guess4": guess[4], "guess5": guess[5]})
+        
+    with open("wordlAI_data.csv") as file:
+        headerline = next(file)
+        total = 0
+        for row in csv.reader(file):
+            total += int(row[0])
+        print(f"Number of games won: {total}")
 
     
 def letter_counter(wordle):
