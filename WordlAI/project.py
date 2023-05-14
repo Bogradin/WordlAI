@@ -3,6 +3,7 @@ from collections import Counter
 from operator import itemgetter
 import re
 import random
+import queue
 #https://gist.github.com/iancward/afe148f28c5767d5ced7a275c12816a3
 
 meaningpedia_resp = requests.get("https://meaningpedia.com/5-letter-words?show=all")
@@ -10,37 +11,103 @@ pattern = re.compile(r'<span itemprop="name">(\w+)</span>')
 word_list = pattern.findall(meaningpedia_resp.text)
 
 class Wordle():
-    def __init__(self, tries, secret_word):
-        self.tries = tries
-        #self.secret_word = secret_word
-        self.secret_word = 'aaccc'
+    def __init__(self):
+        self.tries = 1
+        self.secret_word = random.choice(word_list)
+        #self.secret_word = 'guess'
         self.case = 0
-    
+        self.correct = ["", "", "", "", ""]
+        self.found = set()
+        self.not_possible = set()
+        self.letters = []
+        
+    def ai(self):
+        possibilities = word_list
+        filtered_words = []
+        for word in possibilities:
+            match = True
+            for i in range(5):
+                if self.correct[i] and self.correct[i] != word[i]:
+                    match = False
+                    break
+            if match:
+                filtered_words.append(word)
+
+        possibilities = filtered_words
+        filtered_words = []
+
+        for word in possibilities:
+            match = True
+            for charFound in self.found:
+                if charFound not in word:
+                    match = False
+                    break
+            if match:
+                filtered_words.append(word)
+
+        possibilities = filtered_words
+        filtered_words = []
+
+        
+        for word in possibilities:
+            match = True
+            for charNotPossible in self.not_possible:
+                if charNotPossible in word:
+                    match = False
+                    break
+            if match:
+                filtered_words.append(word)
+        possibilities = filtered_words
+        print(len(possibilities))
+        print(possibilities)
+
+
     def __str__(self):
         if self.case == 1:
             return f"The right word was {self.secret_word}, guessed in {self.tries} tries"
         else:
             return f"The right word was {self.secret_word}, good luck next time!"
         
+    def matches(self, guessed_word):
+        for i in range(5):
+            guessedLetter = guessed_word[i]
+            if guessedLetter == self.secret_word[i]:
+                self.correct[i] = guessedLetter
+                remove_from_list(self, guessedLetter)
+                print("🟩", end = '')
+            elif guessedLetter in self.secret_word:
+                self.found.add(guessedLetter)
+                remove_from_list(self, guessedLetter)
+                print("🟨", end = '')
+            else:
+                self.not_possible.add(guessedLetter)
+                remove_from_list(self, guessedLetter)
+                print("🟥", end = '')
+        print("")
+    
+    def verify_guess(self, guessed_word):
+        if (self.secret_word == guessed_word):
+            return True
+        
 def main():
-    #letter_counter()
-    wordle = Wordle(1, select_random_word())
+    wordle = Wordle()
+    letter_counter(wordle)
     
     while wordle.tries <= 6:
         guess = input("Guess: ")
-        if verify_guess(wordle.secret_word, guess):
+        if wordle.verify_guess(guess):
             print("🟩🟩🟩🟩🟩")
             wordle.case = 1
             print(wordle)
             return 0
         else:
-            matches(wordle.secret_word, guess)
+            wordle.matches(guess)
             wordle.tries += 1
+            wordle.ai()
     print(wordle)
 
     
-def letter_counter():
-
+def letter_counter(wordle):
     word_counter = Counter()
 
     for result in word_list:
@@ -51,24 +118,12 @@ def letter_counter():
     sorted_letters = sorted(word_counter.items(), key=itemgetter(1), reverse=True)
 
     for letter in sorted_letters:
-        print('{}: {}'.format(letter[0], letter[1]))
+        wordle.letters.append(letter[0])
 
-def select_random_word():
-    return random.choice(word_list)
-
-def verify_guess(right_word, guessed_word):
-    if (right_word == guessed_word):
-        return True
-    
-def matches(right_word, guessed_word):
-    for i in range(5):
-        if guessed_word[i] == right_word[i]:
-            print("🟩", end = '')
-        elif guessed_word[i] in right_word:
-            print("🟨", end = '')
-        else:
-            print("🟥", end = '')
-    print("")
+def remove_from_list(wordle, char):
+    try:
+        wordle.letters.remove(char)
+    except: pass
 
 if __name__ == "__main__":
     main()
