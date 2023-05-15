@@ -5,8 +5,8 @@ import re
 import random
 import queue
 import csv
-#https://gist.github.com/iancward/afe148f28c5767d5ced7a275c12816a3
 
+#https://gist.github.com/iancward/afe148f28c5767d5ced7a275c12816a3
 meaningpedia_resp = requests.get("https://meaningpedia.com/5-letter-words?show=all")
 pattern = re.compile(r'<span itemprop="name">(\w+)</span>')
 word_list = pattern.findall(meaningpedia_resp.text)
@@ -15,10 +15,9 @@ class Wordle():
     def __init__(self):
         self.tries = 0
         self.secret_word = random.choice(word_list)
-        #self.secret_word = 'guess'
         self.case = 0
         self.correct = ["", "", "", "", ""]
-        self.found = set()
+        self.found = []
         self.not_possible = set()
         self.letters = []
         self.possible_guesses = word_list
@@ -40,7 +39,7 @@ class Wordle():
         for word in self.possible_guesses:
             match = True
             for charFound in self.found:
-                if charFound not in word:
+                if charFound[0] not in word or charFound[0] in word[charFound[1]]:
                     match = False
                     break
             if match:
@@ -76,7 +75,7 @@ class Wordle():
                 remove_from_list(self, guessedLetter)
                 print("🟩", end = '')
             elif guessedLetter in self.secret_word:
-                self.found.add(guessedLetter)
+                self.found.append((guessedLetter, i))
                 remove_from_list(self, guessedLetter)
                 print("🟨", end = '')
             else:
