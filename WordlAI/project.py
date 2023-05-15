@@ -5,6 +5,7 @@ import re
 import random
 import queue
 import csv
+import time
 
 #https://gist.github.com/iancward/afe148f28c5767d5ced7a275c12816a3
 meaningpedia_resp = requests.get("https://meaningpedia.com/5-letter-words?show=all")
@@ -59,13 +60,6 @@ class Wordle():
                 filtered_words.append(word)
 
         self.possible_guesses = filtered_words
-
-
-    def __str__(self):
-        if self.case == 1:
-            return f"The right word was {self.secret_word}, guessed in {self.tries + 1} tries"
-        else:
-            return f"The right word was {self.secret_word}, good luck next time!"
         
     def matches(self, guessed_word):
         for i in range(5):
@@ -88,7 +82,15 @@ class Wordle():
         if (self.secret_word == guessed_word):
             return True
         
+    def __str__(self):
+        if self.case == 1:
+            return f"The right word was {self.secret_word}, guessed in {self.tries + 1} tries"
+        else:
+            return f"The right word was {self.secret_word}, good luck next time!"
+        
 def main():
+    inicio = time.time()
+    total_tries = 0
 
     with open("wordlAI_data.csv", "w", newline='') as file:
         writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess1", "guess2", "guess3", "guess4", "guess5", "guess6"])
@@ -102,6 +104,7 @@ def main():
         guess = [None, None, None, None, None, None]
         while wordle.tries < 6:
             guess[wordle.tries] = random.choice(wordle.possible_guesses)
+            total_tries += 1
             if wordle.verify_guess(guess[wordle.tries]):
                 print("🟩🟩🟩🟩🟩")
                 wordle.case = 1
@@ -111,7 +114,8 @@ def main():
                 wordle.matches(guess[wordle.tries])
                 wordle.tries += 1
                 wordle.ai()
-        print(wordle)
+        if wordle.case != 1:
+            print(wordle)
 
         with open("wordlAI_data.csv", "a", newline='') as file:
             writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess0", "guess1", "guess2", "guess3", "guess4", "guess5"])
@@ -123,12 +127,15 @@ def main():
         for row in csv.reader(file):
             total += int(row[0])
         print(f"Number of games won: {total}")
+        fim = time.time()
+        print(f"{sample} games played in %.2f seconds" % (fim-inicio))
+        print("average tries were %.2f" % (total_tries/sample))
 
     
 def letter_counter(wordle):
     word_counter = Counter()
 
-    for result in word_list:
+    for result in wordle.possible_guesses:
         word = result.lower().rstrip()
         for letter in set(word):
             word_counter[letter] += 1
