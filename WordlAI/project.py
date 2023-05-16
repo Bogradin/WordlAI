@@ -24,6 +24,12 @@ class Wordle():
         self.possible_guesses = word_list
         
     def ai(self):
+        self.possible_guesses = self.filter_green()
+        self.possible_guesses = self.filter_yellow()
+        self.possible_guesses = self.filter_red()
+        #self.possible_guesses = self.filter_best()
+    
+    def filter_green(self):
         filtered_words = []
         for word in self.possible_guesses:
             match = True
@@ -34,7 +40,9 @@ class Wordle():
             if match:
                 filtered_words.append(word)
 
-        self.possible_guesses = filtered_words
+        return filtered_words
+    
+    def filter_yellow(self):
         filtered_words = []
 
         for word in self.possible_guesses:
@@ -46,9 +54,10 @@ class Wordle():
             if match:
                 filtered_words.append(word)
 
-        self.possible_guesses = filtered_words
+        return filtered_words
+    
+    def filter_red(self):
         filtered_words = []
-
         
         for word in self.possible_guesses:
             match = True
@@ -58,9 +67,21 @@ class Wordle():
                     break
             if match:
                 filtered_words.append(word)
-
-        self.possible_guesses = filtered_words
+    
+        return filtered_words
+    
+    '''
+    def filter_best(self):
+        letter_counter(self)
+        filtered_words = []
+        for letter in self.letters:
+            filtered_words = [word for word in self.possible_guesses if letter in word]
+            if not filtered_words:
+                continue
         
+        return filtered_words
+    '''
+
     def matches(self, guessed_word):
         for i in range(5):
             guessedLetter = guessed_word[i]
@@ -130,7 +151,6 @@ def main():
         fim = time.time()
         print(f"{sample} games played in %.2f seconds" % (fim-inicio))
         print("average tries were %.2f" % (total_tries/sample))
-
     
 def letter_counter(wordle):
     word_counter = Counter()
