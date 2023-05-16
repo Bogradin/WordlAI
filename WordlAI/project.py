@@ -6,11 +6,8 @@ import random
 import queue
 import csv
 import time
-
-#https://gist.github.com/iancward/afe148f28c5767d5ced7a275c12816a3
-meaningpedia_resp = requests.get("https://meaningpedia.com/5-letter-words?show=all")
-pattern = re.compile(r'<span itemprop="name">(\w+)</span>')
-word_list = pattern.findall(meaningpedia_resp.text)
+import dictionary
+word_list = dictionary.get_words()
 
 class Wordle():
     def __init__(self):
