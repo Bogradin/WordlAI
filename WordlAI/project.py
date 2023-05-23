@@ -1,171 +1,172 @@
-import requests
 from collections import Counter
 from operator import itemgetter
-import re
 import random
-import queue
 import csv
 import time
-import dictionary
-word_list = dictionary.get_words()
+import dictionary 
 
+word_list = dictionary.get_words()
 class Wordle():
     def __init__(self):
         self.tries = 0
         self.secret_word = random.choice(word_list)
         self.case = 0
-        self.correct = ["", "", "", "", ""]
-        self.found = []
-        self.not_possible = set()
-        self.letters = []
-        self.possible_guesses = word_list
-        
-    def ai(self):
-        self.possible_guesses = self.filter_green()
-        self.possible_guesses = self.filter_yellow()
-        self.possible_guesses = self.filter_red()
-        #self.possible_guesses = self.filter_best()
     
-    def filter_green(self):
-        filtered_words = []
-        for word in self.possible_guesses:
-            match = True
-            for i in range(5):
-                if self.correct[i] and self.correct[i] != word[i]:
-                    match = False
-                    break
-            if match:
-                filtered_words.append(word)
-
-        return filtered_words
-    
-    def filter_yellow(self):
-        filtered_words = []
-
-        for word in self.possible_guesses:
-            match = True
-            for charFound in self.found:
-                if charFound[0] not in word or charFound[0] in word[charFound[1]]:
-                    match = False
-                    break
-            if match:
-                filtered_words.append(word)
-
-        return filtered_words
-    
-    def filter_red(self):
-        filtered_words = []
-        
-        for word in self.possible_guesses:
-            match = True
-            for charNotPossible in self.not_possible:
-                if charNotPossible in word:
-                    match = False
-                    break
-            if match:
-                filtered_words.append(word)
-    
-        return filtered_words
-    
-    '''
-    def filter_best(self):
-        letter_counter(self)
-        filtered_words = []
-        for letter in self.letters:
-            filtered_words = [word for word in self.possible_guesses if letter in word]
-            if not filtered_words:
-                continue
-        
-        return filtered_words
-    '''
-
     def matches(self, guessed_word):
+        self.tries += 1
+        feedback = []
         for i in range(5):
             guessedLetter = guessed_word[i]
             if guessedLetter == self.secret_word[i]:
-                self.correct[i] = guessedLetter
-                remove_from_list(self, guessedLetter)
-                print("🟩", end = '')
+                feedback.append("🟩")
             elif guessedLetter in self.secret_word:
-                self.found.append((guessedLetter, i))
-                remove_from_list(self, guessedLetter)
-                print("🟨", end = '')
+                feedback.append("🟨")
             else:
-                self.not_possible.add(guessedLetter)
-                remove_from_list(self, guessedLetter)
-                print("🟥", end = '')
-        print("")
-    
-    def verify_guess(self, guessed_word):
-        if (self.secret_word == guessed_word):
+                feedback.append("🟥")
+        stringFeedback = ""
+        for letter in feedback:
+            stringFeedback += letter
+        print(stringFeedback)
+        self.feedback = feedback
+
+    def verify_end_game(self):
+        if self.feedback == ['🟩', '🟩', '🟩', '🟩', '🟩']:
             return True
-        
-    def __str__(self):
-        if self.case == 1:
-            return f"The right word was {self.secret_word}, guessed in {self.tries + 1} tries"
         else:
-            return f"The right word was {self.secret_word}, good luck next time!"
-        
+            return False
+
 def main():
     inicio = time.time()
-    total_tries = 0
-
     with open("wordlAI_data.csv", "w", newline='') as file:
         writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess1", "guess2", "guess3", "guess4", "guess5", "guess6"])
         writer.writerow({"won/lose": 'won_lose', "secret_word": 'secret_word', "guess1": 'guess1', "guess2": 'guess2', "guess3": 'guess3', "guess4": 'guess4', "guess5": 'guess5', "guess6": 'guess6'})
+
     sample = int(input("sample: "))
+    gamesWon = 0
 
     for _ in range(sample):
-        wordle = Wordle()
-        letter_counter(wordle)
-        
-        guess = [None, None, None, None, None, None]
-        while wordle.tries < 6:
-            guess[wordle.tries] = random.choice(wordle.possible_guesses)
-            total_tries += 1
-            if wordle.verify_guess(guess[wordle.tries]):
-                print("🟩🟩🟩🟩🟩")
-                wordle.case = 1
-                print(wordle)
-                break
-            else:
-                wordle.matches(guess[wordle.tries])
-                wordle.tries += 1
-                wordle.ai()
-        if wordle.case != 1:
-            print(wordle)
-
+        global letters, wrongLetters, knownLettersPositions
+        letters = []
+        wrongLetters = set()
+        knownLettersPositions = set()
+        allInputs = []
+        inputWord = random.choice(filter_best(word_list))
+        allInputs.append(inputWord)
+        print(inputWord)
+        wordle_match = Wordle()
+        wordle_match.matches(inputWord)
+        result = 0
+        if wordle_match.verify_end_game():
+            result = 1
+            gamesWon = gamesWon + 1
+            continue
+        else:
+            while wordle_match.tries < 6:
+                inputWord = ai(word_list, wordle_match, allInputs)    
+                allInputs.append(inputWord)
+                print(inputWord)
+                wordle_match.matches(inputWord)
+                if wordle_match.verify_end_game():
+                    result = 1                
+                    gamesWon = gamesWon + 1
+                    break
         with open("wordlAI_data.csv", "a", newline='') as file:
-            writer = csv.DictWriter(file, fieldnames = ["won/lose", "secret_word", "guess0", "guess1", "guess2", "guess3", "guess4", "guess5"])
-            writer.writerow({"won/lose": wordle.case, "secret_word": wordle.secret_word, "guess0": guess[0], "guess1": guess[1], "guess2": guess[2], "guess3": guess[3], "guess4": guess[4], "guess5": guess[5]})
-        
-    with open("wordlAI_data.csv") as file:
-        headerline = next(file)
-        total = 0
-        for row in csv.reader(file):
-            total += int(row[0])
-        print(f"Number of games won: {total}")
-        fim = time.time()
-        print(f"{sample} games played in %.2f seconds" % (fim-inicio))
-        print("average tries were %.2f" % (total_tries/sample))
-    
-def letter_counter(wordle):
-    word_counter = Counter()
+            writer = csv.DictWriter(file, fieldnames=["won/lose", "secret_word", "guess0", "guess1", "guess2", "guess3", "guess4", "guess5"])
+            all_inputs = [allInputs[i] if i < len(allInputs) else None for i in range(6)]
+            
+            writer.writerow({
+                "won/lose": result,
+                "secret_word": wordle_match.secret_word,
+                "guess0": all_inputs[0],
+                "guess1": all_inputs[1],
+                "guess2": all_inputs[2],
+                "guess3": all_inputs[3],
+                "guess4": all_inputs[4],
+                "guess5": all_inputs[5]
+            })
+    fim = time.time()
+    print(f"Number of games won: {gamesWon}") 
+    print(f"{sample} games played in %.2f seconds" % (fim-inicio))
 
-    for result in wordle.possible_guesses:
+def ai(possible_guesses, wordle_match, allInputs):
+        possible_guesses = filter_green(possible_guesses, wordle_match, allInputs)
+        possible_guesses = filter_yellow(possible_guesses, wordle_match, allInputs)
+        possible_guesses = filter_red(possible_guesses, wordle_match, allInputs)
+        possible_guesses = filter_best(possible_guesses)
+        best_guess = random.choice(possible_guesses)     
+        return best_guess
+
+def filter_green(possible_guesses, wordle_match, allInputs):
+    lastInput = allInputs[-1]
+    correctLetter = ["", "", "", "", ""]
+    filtered_guesses = []
+    for i in range(5):
+        if wordle_match.feedback[i] == "🟩":
+            correctLetter[i] = lastInput[i]
+    for guess in possible_guesses:
+        match = True
+        for i in range(5):
+            if correctLetter[i] != "" and correctLetter[i] != guess[i]:
+                match = False
+                break
+        if match == True:
+            filtered_guesses.append(guess)
+
+    return filtered_guesses
+
+def filter_yellow(possible_guesses, wordle_match, allInputs):
+    lastInput = allInputs[-1]
+    filtered_guesses = []
+    for i in range(5):
+        if wordle_match.feedback[i] == "🟨":
+            knownLettersPositions.add((lastInput[i], i))
+    for guess in possible_guesses:
+        match = True
+        for pair in knownLettersPositions:
+            if pair[0] not in guess or pair[0] in guess[pair[1]]:
+                match = False
+                break
+        if match == True:
+            filtered_guesses.append(guess)
+    return filtered_guesses
+
+def filter_red(possible_guesses, wordle_match, allInputs):
+    lastInput = allInputs[-1]
+    filtered_guesses = []
+    for i in range(5):
+        if wordle_match.feedback[i] == "🟥":
+            if lastInput[i] in letters:
+                letters.remove(lastInput[i])
+            wrongLetters.add(lastInput[i])
+    for guess in possible_guesses:
+        match = True
+        for letter in wrongLetters:
+            if letter in guess:
+                match = False
+                break
+        if match == True:
+            filtered_guesses.append(guess)
+    return filtered_guesses
+
+def filter_best(possible_guesses):
+    filtered_words = []
+    letter_counter(possible_guesses)
+    for letter in letters:
+        filtered_words = [word for word in possible_guesses if letter in word]
+        if not filtered_words:
+            continue
+        possible_guesses = filtered_words
+    return possible_guesses
+
+def letter_counter(possible_guesses):
+    word_counter = Counter()
+    for result in possible_guesses:
         word = result.lower().rstrip()
         for letter in set(word):
             word_counter[letter] += 1
-
     sorted_letters = sorted(word_counter.items(), key=itemgetter(1), reverse=True)
-
     for letter in sorted_letters:
-        wordle.letters.append(letter[0])
-
-def remove_from_list(wordle, char):
-    try:
-        wordle.letters.remove(char)
-    except: pass
+        letters.append(letter[0])
 
 if __name__ == "__main__":
     main()
