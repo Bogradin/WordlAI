@@ -1,14 +1,15 @@
-WordlAI is an artificial intelligence, capable of playing the browser game wordle
+WordlAI is an artificial intelligence capable of playing the browser game Wordle.
 
-Game 'Wordle' description:
-    A random 5 letters word is selected from a database
-    Player has 6 attempts to try guessing the secret word
-    After each attempt, player has a feedback about the inputted word
-    If the feedback contains  a green square, it means that the inputted letter is in the right position
-    If the feedback contains  a yellow square, it means that the inputted letter is not in the right position
-    If the feedback contains a red square, it means that the secret word does not have the inputted letter
+Game Description:
 
-Code usage:
-    User is asked for a 'sample' which consists in the number of matches the AI gonna player
-    After that, all inputs and feedbacks are printed while the AI play
-    In the end, a summary is presented with number of games won, time and a CSV file with all data.
+A random 5-letter word is selected from a database.
+The player has 6 attempts to guess the secret word.
+After each attempt, the player receives feedback about their inputted word.
+A green square in the feedback indicates that a letter is in the correct position.
+A yellow square indicates that a letter is correct but in the wrong position.
+A red square indicates that the secret word does not contain the inputted letter.
+Code Usage:
+
+The user is prompted to enter a 'sample,' which represents the number of matches the AI will play.
+During the AI's gameplay, all inputs and feedback are printed.
+At the end, a summary is presented, including the number of games won, time elapsed, and a CSV file containing all the data.
